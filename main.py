@@ -5,7 +5,6 @@ import bcrypt
 
 app = FastAPI()
 
-# This will store users in memory for demonstration purposes
 users_db: Dict[str, Dict] = {}
 
 
@@ -29,7 +28,11 @@ async def register(user: UserRegistration):
         raise HTTPException(status_code=400, detail="Username already taken")
 
     hashed_password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt())
-    users_db[user.username] = {"username": user.username, "password": hashed_password}
+    users_db[user.username] = {
+        "username": user.username,
+        "password": hashed_password,
+        "token": "",
+    }
     return {"message": "User registered successfully"}
 
 
@@ -44,7 +47,8 @@ async def login(user: UserLogin):
 
     # Simulate generating a token
     token = f"token_{user.username}"
-    return {"message": "Login successful", "token": token}
+    users_db[user.username][token] = token
+    return {"message": "Login successful"}
 
 
 @app.post("/translate", status_code=200)
@@ -52,7 +56,6 @@ async def translate(request: TranslationRequest):
     if not request.text:
         raise HTTPException(status_code=400, detail="No text provided for translation")
 
-    # Simulate translation process
     translated_text = f"Translated: {request.text}"
 
     return {"message": "Translation successful", "translated_text": translated_text}
